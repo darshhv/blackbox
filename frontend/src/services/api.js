@@ -6,7 +6,7 @@
 import axios from 'axios';
 
 // Use environment variable if available, otherwise default to /api for local dev
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = 'https://blackbox-33n9.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
