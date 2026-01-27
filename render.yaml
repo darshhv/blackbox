@@ -1,0 +1,42 @@
+# Render.com Blueprint Configuration
+# This file tells Render how to deploy BLACKBOX automatically
+
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: blackbox-db
+    env: docker
+    plan: free
+    databaseName: blackbox
+    databaseUser: blackbox
+
+  # Backend API Service
+  - type: web
+    name: blackbox-backend
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blackbox-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+  # Frontend Static Site
+  - type: web
+    name: blackbox-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: blackbox-backend
+          property: host
