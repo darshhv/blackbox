@@ -1,47 +1,22 @@
 /**
- * BLACKBOX API Service
- * Handles all communication with backend
+ * BLACKBOX Frontend Application
+ * Calm, minimal, narrative-focused
  */
 
-import axios from 'axios';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import IncidentsList from './pages/IncidentsList';
+import IncidentDetail from './pages/IncidentDetail';
 
-// Production backend URL on Render
-const API_BASE_URL = 'https://blackbox-33n9.onrender.com';
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<IncidentsList />} />
+        <Route path="/incidents/:id" element={<IncidentDetail />} />
+      </Routes>
+    </Router>
+  );
+}
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const blackboxAPI = {
-  // Incidents
-  getIncidents: async (params = {}) => {
-    const response = await api.get('/incidents', { params });
-    return response.data;
-  },
-
-  getIncident: async (id) => {
-    const response = await api.get(`/incidents/${id}`);
-    return response.data;
-  },
-
-  resolveIncident: async (id) => {
-    const response = await api.patch(`/incidents/${id}/resolve`);
-    return response.data;
-  },
-
-  // Events
-  getEvents: async (params = {}) => {
-    const response = await api.get('/events', { params });
-    return response.data;
-  },
-
-  createEvent: async (event) => {
-    const response = await api.post('/events', event);
-    return response.data;
-  },
-};
-
-export default blackboxAPI;
+export default App;
