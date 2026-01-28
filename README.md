@@ -530,7 +530,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Built to demonstrate systems thinking, data modeling, and production deployment capabilities. Designed with the principle that calm systems produce calm engineers.
 
-**Author:** Dharsh  
+**Author:** Darshan Reddy V  
 **Repository:** [github.com/darshhv/blackbox](https://github.com/darshhv/blackbox)  
 **Live Demo:** [blackbox-frontend-hwy0.onrender.com](https://blackbox-frontend-hwy0.onrender.com)  
 
