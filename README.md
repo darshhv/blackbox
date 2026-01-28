@@ -1,86 +1,104 @@
 # BLACKBOX
 
-A web-based incident reasoning platform for reconstructing failure timelines through event correlation across distributed services.
+> A web-based incident reasoning platform for understanding system failures through event correlation and timeline reconstruction.
+
+**Live Demo:** [https://blackbox-frontend-hwy0.onrender.com](https://blackbox-frontend-hwy0.onrender.com)
+
+---
 
 ## Overview
 
-BLACKBOX helps engineers understand system failures by presenting events in chronological order and correlating them across services. Unlike traditional monitoring tools that focus on alerting, BLACKBOX focuses on post-incident clarity and understanding.
+BLACKBOX is a production-ready incident analysis platform designed to help engineers understand system failures by reconstructing timelines from distributed events. Rather than focusing on detection or alerting, BLACKBOX provides post-event clarity by correlating events across services and presenting them in chronological sequence.
 
-**Core Philosophy:** Sequence before interpretation. Force clarity under pressure.
+The platform operates on a core principle: **sequence before interpretation**. By forcing engineers to understand the order of events before jumping to conclusions, BLACKBOX reduces cognitive load during incident response and enables more accurate root cause analysis.
 
-## Live Demo
+### Key Characteristics
 
-- **Application:** https://blackbox-frontend-hwy0.onrender.com
-- **API Documentation:** https://blackbox-33n9.onrender.com/docs
-- **Source Code:** https://github.com/darshhv/blackbox
+- **Deterministic correlation** — Three explicit rules, no machine learning
+- **Immutable event storage** — Write-only data model for auditability
+- **Timeline-focused interface** — Chronological ordering as the primary view
+- **Explainable reasoning** — Every correlation decision is documented
+- **Calm design** — Minimal UI to reduce stress during incidents
 
-## Features
-
-- **Automatic Incident Detection** - Configurable threshold-based detection (default: 5 errors within 3 minutes)
-- **Rule-Based Correlation** - Three deterministic rules for explainable event grouping
-- **Timeline Reconstruction** - Chronological event ordering across services
-- **Root Cause Analysis** - Automated probable cause summary generation
-- **Immutable Event Storage** - Write-only event log for data integrity
-- **Clean Interface** - Minimal design focused on reducing cognitive load
-
-## Design Principles
-
-1. **Sequence over severity** - Order matters more than error level
-2. **Correlation before explanation** - Group events before interpreting them
-3. **Structure over intelligence** - Clear rules beat heuristics
-4. **Human reasoning stays in control** - Assist thinking, don't replace it
-5. **Calm systems produce calm engineers** - Reduce noise to improve decisions
+---
 
 ## Architecture
 
+BLACKBOX consists of three primary components:
+
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Web Dashboard                        │
-│                  (React Frontend)                       │
-└─────────────────────────────────────────────────────────┘
-                            │
-┌─────────────────────────────────────────────────────────┐
-│                   FastAPI Backend                       │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │          Event Ingestion Layer                   │   │
-│  │  POST /events - Immutable event storage          │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │       Correlation & Incident Engine              │   │
-│  │  Deterministic rule-based correlation            │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │         Incident Timeline Builder                │   │
-│  │  Chronological sequence reconstruction           │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-                            │
-┌─────────────────────────────────────────────────────────┐
-│                   PostgreSQL                            │
-│  - events (immutable event log)                         │
-│  - incidents (detected failure windows)                 │
-│  - incident_events (correlation mappings)               │
-└─────────────────────────────────────────────────────────┘
+Frontend (React)
+    ↓
+Backend API (FastAPI)
+    ↓
+Database (PostgreSQL)
 ```
 
-## Technology Stack
+### Technology Stack
 
 **Backend**
 - FastAPI (Python 3.11)
-- PostgreSQL 15
 - SQLAlchemy ORM
-- Pydantic for validation
+- PostgreSQL 15
+- Pydantic validation
 
 **Frontend**
 - React 18
-- Vite build tool
+- Vite build system
 - Axios for API communication
 - React Router for navigation
 
-**Deployment**
-- Docker containerization
-- Render.com hosting
-- GitHub Actions for CI/CD
+**Infrastructure**
+- Render (deployment platform)
+- Docker (containerization)
+- GitHub Actions (CI/CD ready)
+
+---
+
+## Core Concepts
+
+### Event Model
+
+Events are immutable records representing something that occurred in a system:
+
+```json
+{
+  "service": "payments",
+  "environment": "prod",
+  "level": "error",
+  "message": "Database timeout after 30s",
+  "request_id": "req_abc123",
+  "timestamp": "2026-01-27T10:42:11Z"
+}
+```
+
+All events are stored permanently without modification or deletion.
+
+### Incident Detection
+
+Incidents are automatically created when error thresholds are exceeded:
+
+- **Threshold:** 5 error-level events
+- **Time Window:** 3 minutes (rolling)
+- **Scope:** Per service, per environment
+
+This threshold-based approach is simple, predictable, and configurable.
+
+### Correlation Rules
+
+Events are correlated to incidents using three deterministic rules:
+
+1. **Same Request ID** — Events sharing a request identifier
+2. **Same Service within Time Window** — Events from the same service within 10 minutes
+3. **Same Environment during Incident** — Events in the environment during an active incident
+
+Each correlation includes the specific rule(s) that matched, making the decision process transparent and debuggable.
+
+### Timeline Reconstruction
+
+The timeline view presents all correlated events in strict chronological order, grouped by service. This preserves the actual sequence of events and enables pattern recognition across distributed systems.
+
+---
 
 ## Installation
 
@@ -89,7 +107,6 @@ BLACKBOX helps engineers understand system failures by presenting events in chro
 - Python 3.11 or higher
 - Node.js 18 or higher
 - PostgreSQL 15 or higher
-- Docker (optional)
 
 ### Local Development
 
@@ -105,17 +122,17 @@ cd blackbox
 ```bash
 createdb blackbox
 createuser blackbox --password
-# Password: blackbox (or your choice)
+# Enter password: blackbox
 ```
 
-**3. Configure environment variables**
+```sql
+GRANT ALL PRIVILEGES ON DATABASE blackbox TO blackbox;
+```
+
+**3. Configure environment**
 
 ```bash
-# Backend
 export DATABASE_URL=postgresql://blackbox:blackbox@localhost:5432/blackbox
-
-# Frontend (optional)
-export VITE_API_URL=http://localhost:8000
 ```
 
 **4. Start the backend**
@@ -126,7 +143,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Backend runs on http://localhost:8000
+Backend runs on `http://localhost:8000`
 
 **5. Start the frontend**
 
@@ -136,402 +153,396 @@ npm install
 npm run dev
 ```
 
-Frontend runs on http://localhost:3000
+Frontend runs on `http://localhost:3000`
 
-### Docker Deployment
+---
 
-```bash
-docker-compose up
-```
+## Deployment
 
-Services will be available at:
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
-- Database: localhost:5432
+### Render Deployment
+
+BLACKBOX is designed for straightforward deployment on Render.
+
+**Database**
+
+1. Create PostgreSQL database
+2. Copy the Internal Database URL
+
+**Backend Service**
+
+1. Connect GitHub repository
+2. Configure service:
+   - **Root Directory:** `backend`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+3. Add environment variable:
+   - `DATABASE_URL`: [Internal Database URL from step 1]
+
+**Frontend Service**
+
+1. Connect the same GitHub repository
+2. Configure service:
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm install && npm run build`
+   - **Publish Directory:** `dist`
+3. Update `frontend/src/services/api.js` with backend URL
+
+### Alternative Platforms
+
+The application can be deployed to any platform supporting:
+- Python WSGI applications
+- Node.js static site hosting
+- PostgreSQL databases
+
+Tested on: Render, Railway, Heroku, Vercel (frontend), AWS
+
+---
 
 ## Usage
 
-### Creating Events
+### API Documentation
 
-Events are sent via the REST API with a fixed schema:
+Interactive API documentation is available at `/docs` when the backend is running.
+
+**Example: Creating an Event**
 
 ```bash
-curl -X POST http://localhost:8000/events \
+curl -X POST https://your-backend-url.com/events \
   -H "Content-Type: application/json" \
   -d '{
     "service": "payments",
     "environment": "prod",
     "level": "error",
-    "message": "Database connection timeout after 30s",
-    "request_id": "req_abc123",
-    "timestamp": "2026-01-27T10:42:11Z"
+    "message": "Database connection timeout",
+    "request_id": "req_001",
+    "timestamp": "2026-01-27T10:00:00Z"
   }'
 ```
 
-**Event Schema**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| service | string | Yes | Service name emitting the event |
-| environment | string | Yes | Environment identifier (prod/staging/dev) |
-| level | enum | Yes | Event level: info, warning, or error |
-| message | string | Yes | Human-readable event description |
-| request_id | string | No | Optional correlation ID for distributed tracing |
-| timestamp | datetime | Yes | ISO 8601 timestamp (UTC recommended) |
-
-### Incident Detection
-
-Incidents are automatically created when error thresholds are exceeded:
-
-- **Threshold:** 5 error events
-- **Time Window:** 3 minutes
-- **Scope:** Per service, per environment
-
-Configuration can be modified in `backend/correlation.py`:
-
-```python
-ERROR_THRESHOLD = 5
-TIME_WINDOW_MINUTES = 3
-```
-
-### Correlation Rules
-
-Events are correlated to incidents using three deterministic rules:
-
-1. **Same request_id** - Events sharing a request ID
-2. **Same service within time window** - Events from the same service within 10 minutes of incident start
-3. **Same environment during incident** - Events in the same environment during an active incident
-
-All correlations are explainable and auditable through the `incident_events` table.
-
-### Viewing Incidents
-
-**Web Interface**
-
-Navigate to http://localhost:3000 to:
-- View all incidents
-- Filter by status (open/resolved)
-- Click into incident details
-- Examine event timelines
-- Read root cause summaries
-
-**API**
+**Example: Listing Incidents**
 
 ```bash
-# List all incidents
-curl http://localhost:8000/incidents
-
-# Get incident details
-curl http://localhost:8000/incidents/1
-
-# Resolve an incident
-curl -X PATCH http://localhost:8000/incidents/1/resolve
+curl https://your-backend-url.com/incidents
 ```
 
-## API Reference
+**Example: Incident Details**
 
-Complete API documentation is available at `/docs` when running the backend:
-
-```
-http://localhost:8000/docs
+```bash
+curl https://your-backend-url.com/incidents/1
 ```
 
-### Key Endpoints
+### Creating an Incident
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | / | Health check |
-| POST | /events | Ingest new event |
-| GET | /events | List events with optional filters |
-| GET | /incidents | List all incidents |
-| GET | /incidents/{id} | Get incident details with timeline |
-| PATCH | /incidents/{id}/resolve | Mark incident as resolved |
+To trigger incident detection, send 5 or more error events from the same service within a 3-minute window:
+
+```bash
+for i in {1..6}; do
+  curl -X POST https://your-backend-url.com/events \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"service\": \"api-gateway\",
+      \"environment\": \"prod\",
+      \"level\": \"error\",
+      \"message\": \"Service unavailable\",
+      \"request_id\": \"req_$i\",
+      \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+    }"
+  sleep 1
+done
+```
+
+The incident will appear immediately in the web interface.
+
+---
+
+## Design Philosophy
+
+### Sequence Over Severity
+
+Order matters more than error levels. A warning that occurs before an error may be more important than the error itself. BLACKBOX preserves temporal sequence as the primary organizing principle.
+
+### Correlation Before Explanation
+
+Events must be grouped accurately before attempting to explain what happened. The correlation engine uses simple, deterministic rules rather than heuristics or machine learning to ensure grouping decisions are predictable and debuggable.
+
+### Structure Over Intelligence
+
+Clear data structures and explicit logic are more valuable than sophisticated algorithms. Every decision in BLACKBOX is traceable and explainable.
+
+### Human Reasoning Stays in Control
+
+The platform assists engineers in understanding failures but does not attempt to replace human judgment. Root cause summaries are framed as "likely" rather than definitive.
+
+### Calm Systems Produce Calm Engineers
+
+The interface is deliberately minimal to reduce visual noise during high-stress incidents. No charts, no animations, no distractions—just the timeline and the facts.
+
+---
 
 ## Configuration
 
 ### Backend Configuration
 
-**Database Connection**
+Located in `backend/correlation.py`:
 
-Set via environment variable:
-```bash
-DATABASE_URL=postgresql://user:password@host:port/database
-```
-
-**Correlation Parameters**
-
-Edit `backend/correlation.py`:
 ```python
 ERROR_THRESHOLD = 5              # Errors to trigger incident
 TIME_WINDOW_MINUTES = 3          # Rolling detection window
 CORRELATION_WINDOW_MINUTES = 10  # Event correlation window
 ```
 
-### Frontend Configuration
+### Database Schema
 
-**API Base URL**
+The database uses three primary tables:
 
-Option 1: Environment variable
-```bash
-VITE_API_URL=https://api.example.com
+**events** — Immutable event log
+- Indexed by timestamp, service, request_id
+- No updates or deletes permitted
+
+**incidents** — Detected failure windows
+- Tracks service, environment, status
+- Start and end times
+
+**incident_events** — Correlation mappings
+- Links events to incidents
+- Stores correlation reasoning
+
+---
+
+## API Reference
+
+### POST /events
+
+Ingest a new event.
+
+**Request Body**
+```json
+{
+  "service": "string",
+  "environment": "string",
+  "level": "info|warning|error",
+  "message": "string",
+  "request_id": "string (optional)",
+  "timestamp": "ISO 8601 datetime"
+}
 ```
 
-Option 2: Direct configuration in `frontend/src/services/api.js`
-```javascript
-const API_BASE_URL = 'https://api.example.com';
-```
+**Response:** 201 Created
+
+### GET /incidents
+
+List all incidents.
+
+**Query Parameters**
+- `status` — Filter by open/resolved
+- `environment` — Filter by environment
+
+**Response:** Array of incident summaries
+
+### GET /incidents/{id}
+
+Get incident details with full timeline.
+
+**Response:** Incident object with correlated events
+
+### PATCH /incidents/{id}/resolve
+
+Mark incident as resolved.
+
+**Response:** Updated incident status
+
+---
 
 ## Project Structure
 
 ```
 blackbox/
 ├── backend/
-│   ├── main.py              # FastAPI application and routes
-│   ├── models.py            # SQLAlchemy database models
-│   ├── database.py          # Database configuration
+│   ├── main.py              # FastAPI application
+│   ├── models.py            # Database models
+│   ├── schemas.py           # Pydantic schemas
 │   ├── correlation.py       # Correlation engine
-│   ├── schemas.py           # Pydantic request/response models
-│   ├── requirements.txt     # Python dependencies
-│   └── Dockerfile           # Backend container config
+│   ├── database.py          # Database configuration
+│   └── requirements.txt     # Python dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/
-│   │   │   ├── IncidentsList.jsx    # Incidents list view
-│   │   │   └── IncidentDetail.jsx   # Incident detail view
+│   │   │   ├── IncidentsList.jsx
+│   │   │   └── IncidentDetail.jsx
 │   │   ├── services/
-│   │   │   └── api.js       # API client
-│   │   ├── App.jsx          # Root component
-│   │   └── main.jsx         # Application entry point
-│   ├── package.json         # Node dependencies
-│   ├── vite.config.js       # Vite configuration
-│   └── Dockerfile           # Frontend container config
+│   │   │   └── api.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
 ├── database/
-│   └── generate_sample_data.py  # Sample data generator
-├── docs/
-│   ├── API.md              # API documentation
-│   └── DEPLOYMENT.md       # Deployment guide
-├── docker-compose.yml      # Multi-service orchestration
-└── README.md              # This file
+│   └── generate_sample_data.py
+└── README.md
 ```
 
-## Development
-
-### Running Tests
-
-```bash
-# Backend tests
-cd backend
-pytest
-
-# Frontend tests
-cd frontend
-npm test
-```
-
-### Code Style
-
-**Python**
-- Follow PEP 8 style guide
-- Use type hints where applicable
-- Maximum line length: 100 characters
-
-**JavaScript**
-- Follow Airbnb JavaScript Style Guide
-- Use ES6+ features
-- Prefer functional components in React
-
-### Database Migrations
-
-```bash
-cd backend
-alembic revision --autogenerate -m "Description of changes"
-alembic upgrade head
-```
-
-## Deployment
-
-### Render.com (Recommended)
-
-**1. Create PostgreSQL database**
-- New → PostgreSQL
-- Note the Internal Database URL
-
-**2. Deploy backend**
-- New → Web Service
-- Connect GitHub repository
-- Root Directory: `backend`
-- Build Command: `pip install -r requirements.txt`
-- Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Environment Variable: `DATABASE_URL` (from step 1)
-
-**3. Deploy frontend**
-- New → Static Site
-- Connect GitHub repository
-- Root Directory: `frontend`
-- Build Command: `npm install && npm run build`
-- Publish Directory: `dist`
-- Environment Variable: `VITE_API_URL` (backend URL from step 2)
-
-Full deployment instructions: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-
-### Other Platforms
-
-BLACKBOX can be deployed on:
-- Heroku
-- AWS (EC2, ECS, or Lambda)
-- Google Cloud Platform
-- Azure
-- DigitalOcean
-- Self-hosted infrastructure
-
-## Performance Considerations
-
-**Database Indexing**
-
-Critical indexes are created automatically:
-- `events(service, timestamp)`
-- `events(request_id)`
-- `events(environment, timestamp)`
-- `incidents(primary_service, environment, status)`
-
-**Connection Pooling**
-
-Configure in `backend/database.py`:
-```python
-engine = create_engine(
-    DATABASE_URL,
-    pool_size=5,
-    max_overflow=10
-)
-```
-
-**Frontend Optimization**
-
-- Code splitting via Vite
-- Lazy loading of routes
-- Memoization of expensive computations
-
-## Limitations and Known Issues
-
-**Current Limitations**
-
-- No authentication or authorization (v1.0)
-- Single-tenant only
-- No real-time updates (requires page refresh)
-- Limited to text-based events (no binary data)
-
-**Planned Features**
-
-See [ROADMAP.md](ROADMAP.md) for planned enhancements.
-
-## Contributing
-
-Contributions are welcome. Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Please ensure:
-- Code follows style guidelines
-- Tests pass
-- Documentation is updated
-- Commit messages are clear
+---
 
 ## Design Decisions
 
 ### Why Rule-Based Correlation?
 
-Traditional ML-based approaches lack explainability, which is critical during incident response. Engineers must trust the correlation logic. Rule-based correlation is:
-- Deterministic
-- Debuggable
-- Auditable
-- Predictable
+Machine learning would introduce unpredictability in a system where trust is critical. Engineers must be able to verify correlation decisions. Rule-based logic is:
+- Completely deterministic
+- Fully debuggable
+- Easily auditable
+- Understandable by all team members
 
 ### Why Immutable Events?
 
-Events are never updated or deleted to:
-- Build trust in the data layer
-- Maintain clear audit trails
-- Prevent retroactive manipulation
-- Enable event sourcing patterns
+Allowing event modification would undermine trust in the timeline. Immutability provides:
+- Clear audit trail
+- No possibility of retroactive changes
+- Single source of truth
+- Simplified debugging
 
-### Why No AI/ML?
+### Why No Alerting?
 
-This is a deliberate choice:
-- Explainability over cleverness
-- No hidden heuristics
-- Deterministic behavior
-- Provable correctness
+BLACKBOX operates after alerts have already fired. It exists to help engineers understand what happened, not to notify them that something is happening. This focused scope prevents feature creep and maintains clarity of purpose.
 
-### Why Minimal UI?
+### Why Timeline as Primary View?
 
-Incident response happens under stress. The interface is designed to:
-- Reduce cognitive load
-- Present information sequentially
-- Avoid visual noise
-- Focus on clarity
+Most incident tools focus on aggregation and statistics. BLACKBOX prioritizes sequence because:
+- Causal relationships emerge from ordering
+- Engineers think in terms of "what happened first"
+- Timelines reveal cascade failures
+- Chronological views are universally understood
 
-## Related Projects
+---
 
-- **Grafana** - Metrics visualization
-- **Prometheus** - Metrics collection
-- **Jaeger** - Distributed tracing
-- **Elasticsearch/Kibana** - Log aggregation
-- **PagerDuty** - Incident alerting
+## Limitations
 
-BLACKBOX complements these tools by focusing on post-incident analysis and timeline reconstruction.
+### Deliberate Exclusions
+
+The following features are intentionally not included in version 1.0:
+
+- Authentication and authorization
+- Multi-tenant organizations
+- Alert/paging integration
+- Real-time event streaming
+- Metric visualization
+- Distributed tracing integration
+- Machine learning or AI
+- Event search and filtering (UI)
+- Automatic incident resolution
+
+These exclusions reflect design restraint and focus on core functionality.
+
+### Known Constraints
+
+- **Timestamp-based detection:** Incident detection uses event timestamps, not ingestion time
+- **Single-environment isolation:** Events from different environments never correlate
+- **No event updates:** Once created, events cannot be modified
+- **Manual resolution:** Incidents must be manually marked as resolved
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow these guidelines:
+
+1. **Maintain the philosophy** — Any contribution should align with the core design principles
+2. **Preserve explainability** — New features must be deterministic and debuggable
+3. **Document reasoning** — Explain the "why" behind technical decisions
+4. **Test thoroughly** — Include tests for new functionality
+5. **Keep it simple** — Favor clarity over cleverness
+
+### Development Process
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Update documentation
+6. Submit a pull request
+
+---
+
+## Testing
+
+### Manual Testing
+
+Use the sample data generator:
+
+```bash
+cd database
+python generate_sample_data.py
+```
+
+Choose from predefined scenarios:
+1. Database timeout incident
+2. Deployment failure
+3. Cascading service failure
+4. Multi-environment events
+
+### API Testing
+
+Interactive testing via Swagger UI:
+```
+http://localhost:8000/docs
+```
+
+---
+
+## Performance Considerations
+
+### Database Indexing
+
+The schema includes indexes on:
+- `events.timestamp`
+- `events.service`
+- `events.request_id`
+- `events.environment`
+
+These support efficient incident detection and correlation queries.
+
+### Scaling Guidance
+
+For high-volume deployments:
+- Partition events table by timestamp
+- Add read replicas for query load
+- Implement event batching for ingestion
+- Consider time-series database for events
+
+The current implementation is optimized for clarity and maintainability, not maximum throughput.
+
+---
 
 ## License
 
 MIT License
 
-Copyright (c) 2026 Dharsh
+Copyright (c) 2026 BLACKBOX Contributors
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## Authors
-
-**Dharsh** - Initial work - [darshhv](https://github.com/darshhv)
+---
 
 ## Acknowledgments
 
-Built with the philosophy that calm systems produce calm engineers. Inspired by the challenges of debugging distributed systems in production environments.
+Built to demonstrate systems thinking, data modeling, and production deployment capabilities. Designed with the principle that calm systems produce calm engineers.
+
+**Author:** Dharsh  
+**Repository:** [github.com/darshhv/blackbox](https://github.com/darshhv/blackbox)  
+**Live Demo:** [blackbox-frontend-hwy0.onrender.com](https://blackbox-frontend-hwy0.onrender.com)  
+
+---
 
 ## Support
 
-For questions, issues, or suggestions:
-- Open an issue on GitHub
-- Email: dharsxn46@gmail.com
-- Documentation: [docs/](docs/)
+For questions, issues, or discussions:
+- **Issues:** GitHub Issues
+- **Documentation:** See `/docs` folder
+- **API Reference:** `/docs` endpoint when running
 
-## Citation
+---
 
-If you use BLACKBOX in your research or project, please cite:
-
-```
-@software{blackbox2026,
-  author = {Dharsh},
-  title = {BLACKBOX: Incident Reasoning Platform},
-  year = {2026},
-  url = {https://github.com/darshhv/blackbox}
-}
-```
+**BLACKBOX** — Understanding failures through sequence.
